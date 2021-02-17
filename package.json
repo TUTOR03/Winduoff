@@ -11,6 +11,7 @@
     "url": "git+https://github.com/TUTOR03/Winduoff.git"
   },
   "author": "TUTOR03",
+  "keywords":["cli", "command", "windows", "service"],
   "license": "MIT",
   "bin": {
     "winduoff": "./bin/index.js"

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 const chalk = require("chalk")
+const fs = require('fs')
 const { exec } = require('child_process')
-const config = require('./config.json')
+let config = require('../config.json')
 
 const async_exec = (command, options={})=>{
 	return new Promise((resolve, reject)=>{
@@ -17,7 +18,7 @@ const async_exec = (command, options={})=>{
 
 const disableCommand = {
 	command: 'dis [error] [prev]',
-	aliases: ['disable'],
+	aliases: ['$0','disable'],
 	desc: 'Disable all services',
 	handler: (args)=>{
 		let success_c = 0
@@ -50,12 +51,76 @@ const disableCommand = {
 	}
 }
 
+const listCommand = {
+	command: 'list',
+	aliases: ['ls','cfg'],
+	desc: 'List all services in config file',
+	handler: (_)=>{
+		config.forEach((ob)=>{
+			console.log(` -- ${ob}`)
+		})
+	}
+}
+
+const delCommand = {
+	command: 'del <name>',
+	aliases: ['delete'],
+	desc: 'Delete service form config file',
+	handler: (args)=>{
+		if(config.includes(args.name)){
+			config = config.filter((ob)=>{return(ob!=args.name)})
+			fs.writeFile('./config.json', JSON.stringify(config, null, 2), (err)=>{
+				if(err){
+					console.log(err)
+				}
+				else{
+					console.log(`${chalk.green(args.name)} was deleted from config`)
+				}
+			})
+		}
+		else{
+			console.log(`${chalk.green(args.name)} is not in config`)
+		}
+	}
+}
+
+const addCommand = {
+	command: 'add <name>',
+	desc: 'Add service in config',
+	handler: (args)=>{
+		if(!config.includes(args.name)){
+			config.push(args.name)
+			fs.writeFile('./config.json', JSON.stringify(config, null, 2), (err)=>{
+				if(err){
+					console.log(err)
+				}
+				else{
+					console.log(`${chalk.green(args.name)} was added to config`)
+				}
+			})
+		}
+		else{
+			console.log(`${chalk.green(args.name)} is already in config`)
+		}
+	}
+}
+
 const errorOption = [
 	'error',
 	{
 		alias: 'e',
 		type: 'boolean',
 		describe: 'Show errors during the process',
+		default: false
+	}
+]
+
+const nameOption = [
+	'name',
+	{
+		alias: 'n',
+		type: 'string',
+		describe: 'Name of the service',
 	}
 ]
 
@@ -64,10 +129,11 @@ const prevOption = [
 	{
 		alias: 'p',
 		type: 'boolean',
-		describe: 'Show previous state of the service'
+		describe: 'Show previous state of the service',
+		default: false
 	}
 ]
 
-exports.commands = [disableCommand]
+exports.commands = [disableCommand, listCommand, delCommand, addCommand]
 
-exports.options = [errorOption, prevOption]
+exports.options = [errorOption, prevOption, nameOption]
